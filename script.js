@@ -8,34 +8,83 @@ class ColdOutreachGenerator {
         this.isProcessing = false;
         this.isPaused = false;
         this.userName = '';
+        this.lastExecution = 0;
+        this.executionCount = 0;
+        this.maxUrlsPerRequest = 10;
+        this.requestTimeout = 5000; // 5 segundos entre execuções
+    }
+
+    // Sanitiza entradas para prevenir XSS
+    sanitizeInput(input) {
+        const div = document.createElement('div');
+        div.textContent = input;
+        return div.innerHTML;
+    }
+
+    // verifica se há tentativa de rating limiting
+    checkRateLimit() {
+        const now = Date.now();
+        if (now - this.lastExecution < this.requestTimeout) {
+            throw new Error("Por favor, aguarde alguns segundos antes de fazer outra requisição.");
+
+        }
+
+        if (this.executionCount > 10) {
+            throw new Error("Limite de requisições excedido. Por favor, aguarde alguns minutos.");
+
+        }
+
+        this.lastExecution = now;
+        this.executionCount++;
+
+        //Reset do contador após 1 minuto
+        setTimeout(() => {
+            this.executionCount = Math.max(0, this.executionCount - 1);
+        }, 60000)
     }
 
     extractStoreName(url) {
         try {
-            let cleanUrl = url.replace(/^https?:\/\//, '');
-            cleanUrl = cleanUrl.replace(/^www\./, '');
-            
-            if (cleanUrl.includes('instagram.com/')) {
-                const handle = cleanUrl.replace(/.*instagram\.com\//, '').split('/')[0];
-                return handle;
-            }
-            
-            const domain = cleanUrl.split('/')[0].split('.')[0];
-            return domain;
-        } catch (error) {
-            return null;
+            // Sanitiza a URL antes de processar
+        const sanitizedUrl = this.sanitizeInput(url);
+        let cleanUrl = sanitizedUrl.replace(/^https?:\/\//, '');
+        cleanUrl = cleanUrl.replace(/^www\./, '');
+        
+        if (cleanUrl.includes('instagram.com/')) {
+            const handle = cleanUrl.replace(/.*instagram\.com\//, '').split('/')[0];
+            return this.sanitizeInput(handle);
+        }
+        
+        const domain = cleanUrl.split('/')[0].split('.')[0];
+        return this.sanitizeInput(domain);
+    } catch (error) {
+        return null;
         }
     }
 
     isValidUrl(urlString) {
         const urlToTest = urlString.startsWith('http') ? urlString : `https://${urlString}`;
 
-        try {
-            new URL(urlToTest);
-            return true;
-        } catch (error) {
+    try {
+        const urlObj = new URL(urlToTest);
+        
+        // Permite apenas HTTP e HTTPS
+        if (!['http:', 'https:'].includes(urlObj.protocol)) {
             return false;
         }
+        
+        // Bloqueia URLs com caracteres suspeitos
+        if (/[<>{}]/.test(urlString)) {
+            return false;
+
+        }
+
+        return true;
+
+        } catch (error){
+            return false;
+        }
+
     }
 
     async fetchWebsiteData(url) {
@@ -180,18 +229,33 @@ Especialista em Tráfego & SEO para Moda`;
     }
 
     async processUrls(urlList, userName) {
-        this.userName = userName;
-        this.processedUrls = [];
-        this.ignoredUrls = [];
-        this.allUrls = urlList.split('\n').filter(url => url.trim());
-        this.currentIndex = 0;
-        this.isProcessing = true;
-        this.isPaused = false;
+        // Verifica rate limiting antes de processar
+    this.checkRateLimit();
+    
+    // Sanitiza o nome do usuário
+    this.userName = this.sanitizeInput(userName);
+    
+    // Divide e filtra as URLs
+    const rawUrls = urlList.split('\n').filter(url => url.trim());
+    
+    // Aplica limite de URLs por requisição
+    if (rawUrls.length > this.maxUrlsPerRequest) {
+        throw new Error(`Número máximo de URLs excedido. Máximo permitido: ${this.maxUrlsPerRequest}`);
+    }
+    
+    // Filtra URLs válidas
+    this.allUrls = rawUrls.filter(url => this.isValidUrl(url));
+    this.ignoredUrls = rawUrls.filter(url => !this.isValidUrl(url));
+    
+    this.processedUrls = [];
+    this.currentIndex = 0;
+    this.isProcessing = true;
+    this.isPaused = false;
 
-        await this._processUrlsInternal();
+    await this._processUrlsInternal();
 
-        this.isProcessing = false;
-        return this.processedUrls;
+    this.isProcessing = false;
+    return this.processedUrls;
     }
 
     async _processUrlsInternal() {
@@ -242,13 +306,13 @@ Especialista em Tráfego & SEO para Moda`;
 
         data.forEach(row => {
             const csvRow = [
-                `"${row.url}"`,
-                `"${row.contato}"`,
-                `"${row.conquista}"`,
-                `"${row.oportunidade}"`,
-                `"${row.whatsapp}"`,
-                `"${row.blogUrl}"`,
-                `"${row.mensagem.replace(/"/g, '""').replace(/\n/g, '\\n')}"`
+                `"${this.sanitizeInput(row.url)}"`,
+                `"${this.sanitizeInput(row.contato)}"`,
+                `"${this.sanitizeInput(row.conquista)}"`,
+                `"${this.sanitizeInput(row.oportunidade)}"`,
+                `"${this.sanitizeInput(row.whatsapp)}"`,
+                `"${this.sanitizeInput(row.blogUrl)}"`,
+                `"${this.sanitizeInput(row.mensagem.replace(/"/g, '""').replace(/\n/g, '\\n'))}"`
             ];
             csvContent.push(csvRow.join(','));
         });
@@ -464,4 +528,17 @@ document.addEventListener('DOMContentLoaded', function() {
             placeholderIndex = (placeholderIndex + 1) % placeholders.length;
         }
     }, 3000);
+
+
+    // Adiciona validação em tempo real para a entrada de URLs
+        const urlInputField = document.getElementById('urls-input');
+        urlInputField.addEventListener('input', function() {
+            const urls = this.value.split('\n');
+            if (urls.length > generator.maxUrlsPerRequest) {
+                alert(`Limite de ${generator.maxUrlsPerRequest} URLs excedido. As URLs adicionais serão ignoradas.`);
+    }
+
+    });
+
+
 });
