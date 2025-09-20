@@ -12,6 +12,8 @@ class ColdOutreachGenerator {
         this.executionCount = 0;
         this.maxUrlsPerRequest = 10;
         this.requestTimeout = 5000; // 5 segundos entre execuções
+        this.uniqueUrls = new Set(); // Remove urls duplicadas   
+
     }
 
     // Sanitiza entradas para prevenir XSS
@@ -63,10 +65,15 @@ class ColdOutreachGenerator {
     }
 
     isValidUrl(urlString) {
-        const urlToTest = urlString.startsWith('http') ? urlString : `https://${urlString}`;
+    const urlToTest = urlString.startsWith('http') ? urlString : `https://${urlString}`;
 
     try {
         const urlObj = new URL(urlToTest);
+        
+        // Verifica se a URL já foi processada
+        if (this.uniqueUrls.has(urlToTest.toLowerCase())) {
+            return false; // URL duplicada
+        }
         
         // Permite apenas HTTP e HTTPS
         if (!['http:', 'https:'].includes(urlObj.protocol)) {
@@ -76,16 +83,20 @@ class ColdOutreachGenerator {
         // Bloqueia URLs com caracteres suspeitos
         if (/[<>{}]/.test(urlString)) {
             return false;
-
         }
-
-        return true;
-
-        } catch (error){
+        
+        // Limita o tamanho da URL
+        if (urlString.length > 200) {
             return false;
         }
-
+        
+        // Adiciona a URL ao conjunto de URLs únicas
+        this.uniqueUrls.add(urlToTest.toLowerCase());
+        return true;
+    } catch (error) {
+        return false;
     }
+}
 
     async fetchWebsiteData(url) {
         try {
