@@ -381,64 +381,44 @@ document.addEventListener('DOMContentLoaded', function() {
         statusDiv.classList.remove('hidden');
     }
 
-    // Função para mostrar resultados
-    function showResults(results, stats) {
-        const resultsSummary = document.getElementById('results-summary');
-        
-        if (!resultsSummary) {
-            console.error('Elemento #results-summary não encontrado.');
-            return;
-        }
-
-        const resultHTML = `
-            <div class="results-stats">
-                <h4>📊 Resumo do Processamento</h4>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number">${stats.processed}</div>
-                        <div class="stat-label">Processadas</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">${stats.ignored}</div>
-                        <div class="stat-label">Ignoradas</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">${stats.total}</div>
-                        <div class="stat-label">Total</div>
-                    </div>
-                </div>
-            </div>
-
-           /* 
-           <div class="preview-section">
-                <h4>👀 Preview das Mensagens (primeiras 3)</h4>
-                <div class="preview-list">
-                    ${results.slice(0, 3).map(result => `
-                        <div class="preview-item">
-                            <div class="preview-header">
-                                <strong>${result.url}</strong>
-                                <span class="contact-badge">${result.contato}</span>
-                            </div>
-                            <div class="preview-message">
-                                ${result.mensagem.replace(/\n/g, '<br>').substring(0, 200)}...
-                            </div>
-                            <div class="preview-details">
-                                <small>WhatsApp: ${result.whatsapp}</small><br>
-                                <small>Blog: ${result.blogUrl}</small>
-                            </div>
-                        </div>
-                    `).join('')} 
-
-           */
-
-                   ${results.length > 3 ? `<div class="preview-more">+ ${results.length - 3} mensagens no CSV</div>` : ''}
-                </div>
-            </div>
-        `;
-
-        resultsSummary.innerHTML = resultHTML;
-        resultsSection.classList.remove('hidden');
+   // Função para mostrar resultados
+function showResults(results, stats) {
+    const resultsSummary = document.getElementById('results-summary');
+    
+    if (!resultsSummary) {
+        console.error('Elemento #results-summary não encontrado.');
+        return;
     }
+
+    const resultHTML = `
+        <div class="results-stats">
+            <h4>📊 Resumo do Processamento</h4>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">${stats.processed}</div>
+                    <div class="stat-label">Processadas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.ignored}</div>
+                    <div class="stat-label">Ignoradas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.total}</div>
+                    <div class="stat-label">Total</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <h4>✅ Processamento concluído</h4>
+            <p>O arquivo CSV com todas as mensagens foi baixado automaticamente.</p>
+            <p>Foram processadas ${stats.processed} URLs com sucesso e ${stats.ignored} URLs foram ignoradas.</p>
+        </div>
+    `;
+
+    resultsSummary.innerHTML = resultHTML;
+    resultsSection.classList.remove('hidden');
+}
 
     // Event listener para o botão de Pausar/Retomar
     pauseResumeBtn.addEventListener('click', async function() {
