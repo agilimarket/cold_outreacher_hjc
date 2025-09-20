@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Otimizador de Cold Outreach - Moda</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Otimizador de Cold Outreach</h1>
+            <p class="subtitle">Gere mensagens personalizadas para prospecção de lojas de moda</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="urls-input">URLs para análise (uma por linha):</label>
+                    <textarea id="urls-input" rows="8" placeholder="https://exemploloja.com.br\nhttps://instagram.com/lojamoda"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-name">Seu Nome:</label>
+                    <input type="text" id="user-name" placeholder="Seu nome completo">
+                </div>
+                
+                <div class="button-group">
+                    <button id="generate-btn" class="btn btn-primary">
+                        <span class="button-icon">🚀</span>
+                        <span class="button-text">Gerar Mensagens</span>
+                    </button>
+                    <button id="pause-resume-btn" class="btn btn-warning hidden">
+                        <span class="button-icon">⏸️</span>
+                        <span class="button-text">Pausar</span>
+                    </button>
+                </div>
+                
+                <div class="progress-container hidden" id="progress-bar">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <div class="status-text">Processando...</div>
+                </div>
+                
+                <div class="status-display processing hidden" id="status-display">
+                    <span class="status-icon">⏳</span>
+                    <span class="status-text">Aguardando início...</span>
+                </div>
+            </div>
+            
+            <div class="results-section hidden" id="results-section">
+                <h3>Resultados da Análise</h3>
+                <div id="results-summary"></div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Desenvolvido para prospecção inteligente em cold outreach | 2023</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
