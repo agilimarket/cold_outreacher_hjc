@@ -409,7 +409,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
 
-            <div class="preview-section">
+           /* 
+           <div class="preview-section">
                 <h4>👀 Preview das Mensagens (primeiras 3)</h4>
                 <div class="preview-list">
                     ${results.slice(0, 3).map(result => `
@@ -426,8 +427,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <small>Blog: ${result.blogUrl}</small>
                             </div>
                         </div>
-                    `).join('')}
-                    ${results.length > 3 ? `<div class="preview-more">+ ${results.length - 3} mensagens no CSV</div>` : ''}
+                    `).join('')} 
+
+           */
+
+                   ${results.length > 3 ? `<div class="preview-more">+ ${results.length - 3} mensagens no CSV</div>` : ''}
                 </div>
             </div>
         `;
