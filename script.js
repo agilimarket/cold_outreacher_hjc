@@ -428,7 +428,10 @@ function showResults(results, stats) {
         <div class="preview-section">
             <h4>✅ Processamento concluído</h4>
             <p>O arquivo CSV com todas as mensagens foi baixado automaticamente.</p>
-            <p>Foram processadas ${stats.processed} URLs com sucesso e ${stats.ignored} URLs foram ignoradas.</p>
+            <p>Foram processadas ${stats.processed} URLs únicas.</p>
+        ${stats.duplicates > 0 ? 
+            `<p>${stats.duplicates} URLs duplicadas foram identificadas e ignoradas.</p>` : 
+            ''}
         </div>
     `;
 
