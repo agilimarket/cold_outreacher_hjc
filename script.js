@@ -240,6 +240,11 @@ Especialista em Tráfego & SEO para Moda`;
     }
 
     async processUrls(urlList, userName) {
+
+        // Reset do conjunto de URLs únicas a cada nova execução
+    this.uniqueUrls.clear();
+    
+        // Resto do código permanece igual
         // Verifica rate limiting antes de processar
     this.checkRateLimit();
     
