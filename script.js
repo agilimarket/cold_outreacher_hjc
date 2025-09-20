@@ -351,11 +351,15 @@ Especialista em Tráfego & SEO para Moda`;
         }
     }
 
-    getStats() {
-        return {
+        getStats() {
+            const totalUrls = this.allUrls.length + this.ignoredUrls.length;
+            const duplicates = totalUrls - this.uniqueUrls.size;
+    
+                return {
             processed: this.processedUrls.length,
             ignored: this.ignoredUrls.length,
-            total: this.processedUrls.length + this.ignoredUrls.length
+            duplicates: duplicates > 0 ? duplicates : 0,
+            total: totalUrls
         };
     }
 }
