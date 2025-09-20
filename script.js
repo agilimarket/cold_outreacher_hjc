@@ -65,35 +65,33 @@ class ColdOutreachGenerator {
     }
 
     isValidUrl(urlString) {
-    const urlToTest = urlString.startsWith('http') ? urlString : `https://${urlString}`;
-
+    // Remove espaços em branco e verifica se está vazio
+    const trimmedUrl = urlString.trim();
+    if (!trimmedUrl) return false;
+    
     try {
+        // Adiciona https:// se não tiver protocolo
+        const urlToTest = trimmedUrl.startsWith('http') ? trimmedUrl : `https://${trimmedUrl}`;
         const urlObj = new URL(urlToTest);
         
-        // Verifica se a URL já foi processada
-        if (this.uniqueUrls.has(urlToTest.toLowerCase())) {
-            return false; // URL duplicada
-        }
-        
-        // Permite apenas HTTP e HTTPS
+        // Permite apenas HTTP e HTTPS por segurança
         if (!['http:', 'https:'].includes(urlObj.protocol)) {
             return false;
         }
         
-        // Bloqueia URLs com caracteres suspeitos
-        if (/[<>{}]/.test(urlString)) {
+        // Verifica se tem um domínio básico (pelo menos um ponto no hostname)
+        if (!urlObj.hostname || !urlObj.hostname.includes('.')) {
             return false;
         }
         
-        // Limita o tamanho da URL
-        if (urlString.length > 200) {
+        // Bloqueia apenas caracteres realmente perigosos
+        if (/[<>{}$]/.test(urlString)) {
             return false;
         }
         
-        // Adiciona a URL ao conjunto de URLs únicas
-        this.uniqueUrls.add(urlToTest.toLowerCase());
         return true;
     } catch (error) {
+        // Se ocorrer erro na análise, não é uma URL válida
         return false;
     }
 }
