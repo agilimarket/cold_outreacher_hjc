@@ -308,3 +308,13 @@ footer {
   border-radius: 4px;
   display: none;
 }
+
+/* Adicione este estilo para a estatística de duplicatas */
+.stat-card.duplicate {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+}
+
+.stat-card.duplicate .stat-number,
+.stat-card.duplicate .stat-label {
+    color: white;
+}
