@@ -19,6 +19,7 @@ class ColdOutreachGenerator {
         this.corsProxyUrl = 'https://cors-anywhere.herokuapp.com/';
         this.requestTimeout = 10000; // 10 segundos para timeout
         this.estimatedTimePerUrl = 2000; // 2 segundos por URL (para estimativa)
+        this.requestCache = new Map();
 
     }
 
@@ -121,6 +122,14 @@ class ColdOutreachGenerator {
 }
 
     async fetchWebsiteData(url) {
+
+            // Verificar se já temos essa URL em cache
+        const cached = this.requestCache.get(url);
+        if (cached) {
+            console.log(`Usando dados em cache para: ${url}`);
+            return cached;
+        }
+
         try {
             console.log(`Iniciando análise de: ${url}`);
             
@@ -132,6 +141,12 @@ class ColdOutreachGenerator {
                 const realData = this.analyzeRealWebsite(html, url);
                 console.log(`Análise real bem-sucedida para: ${url}`);
                 return realData;
+
+                 // Armazenar no cache
+            if (result) {
+                this.requestCache.set(url, result);
+        }
+
             } else {
                 // Fallback para dados realistas
                 console.log(`Usando dados realistas para: ${url}`);
@@ -222,38 +237,28 @@ class ColdOutreachGenerator {
         return blogIndicators.some(indicator => text.toLowerCase().includes(indicator));
 }
 
-    // Continue com as outras funções auxiliares...
-
-        _hasInstagramLink(doc) {
-    const links = doc.querySelectorAll('a[href*="instagram.com"]');
-    return links.length > 0;
-}
-
-_estimateFollowers(doc) {
-    // Tentar encontrar seguidores no texto da página
-    const text = doc.body.textContent || '';
-    const followerMatch = text.match(/(\d+[,.]?\d*)[kK]?\s+(seguidores|followers)/);
-    
-    if (followerMatch) {
-        let count = parseFloat(followerMatch[1].replace(',', '.'));
-        if (followerMatch[0].toLowerCase().includes('k')) {
-            count *= 1000;
-        }
-        return Math.floor(count);
-    }
-    
-    // Valor padrão se não encontrar
-    return Math.floor(Math.random() * 5000) + 100;
-}
-
-_hasBlog(doc) {
-    const blogIndicators = ['blog', 'notícias', 'artigos', 'posts', 'news'];
-    const text = doc.body.textContent || '';
-    return blogIndicators.some(indicator => text.toLowerCase().includes(indicator));
-}
-
 // Adicione as outras funções auxiliares aqui...
-    _findLastBlogPost(doc) {
+
+generateRealisticData(url) {
+    const domain = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
+    
+    return {
+        title: `Página de ${domain}`,
+        description: '',
+        hasInstagram: Math.random() > 0.4,
+        instagramFollowers: Math.floor(Math.random() * 10000),
+        hasBlog: Math.random() > 0.6,
+        lastBlogPost: this.generateRecentDate(),
+        loadingSpeed: 1.5 + (Math.random() * 2),
+        isMobileFriendly: Math.random() > 0.3,
+        hasContactForm: Math.random() > 0.5,
+        productCount: Math.floor(Math.random() * 200),
+        whatsapp: this.generateWhatsApp(domain),
+        blogUrl: this.generateBlogUrl(url)
+    };
+}
+
+    findLastBlogPost(doc) {
         // Implementação simplificada - procurar por datas recentes
         const text = doc.body.textContent || '';
         const currentYear = new Date().getFullYear();
@@ -272,24 +277,24 @@ _hasBlog(doc) {
         return 'Não encontrado';
     }
 
-    _estimateLoadingSpeed(doc) {
+    estimateLoadingSpeed(doc) {
         // Estimativa baseada na complexidade do HTML
         const elementCount = doc.querySelectorAll('*').length;
         return Math.min(5, (elementCount / 1000) * 0.5 + (Math.random() * 1.5));
     }
 
-    _isMobileFriendly(doc) {
+    isMobileFriendly(doc) {
         const viewport = doc.querySelector('meta[name="viewport"]');
         return !!viewport;
     }
 
-    _hasContactForm(doc) {
+    hasContactForm(doc) {
         const contactIndicators = ['contact', 'contato', 'fale-conosco', 'contact-us'];
         const text = doc.body.textContent || '';
         return contactIndicators.some(indicator => text.toLowerCase().includes(indicator));
     }
 
-    _estimateProductCount(doc) {
+    estimateProductCount(doc) {
         // Procurar por indicadores de e-commerce
         const text = doc.body.textContent || '';
         if (text.includes('carrinho') || text.includes('shopping cart') || text.includes('adicionar ao carrinho')) {
@@ -298,7 +303,7 @@ _hasBlog(doc) {
         return Math.floor(Math.random() * 50);
     }
 
-    _findWhatsApp(doc) {
+    findWhatsApp(doc) {
         const links = doc.querySelectorAll('a[href*="wa.me"], a[href*="whatsapp.com"], a[href*="api.whatsapp.com"]');
         if (links.length > 0) {
             const href = links[0].href;
@@ -308,7 +313,7 @@ _hasBlog(doc) {
         return 'Não encontrado';
     }
 
-    _findBlogUrl(doc, originalUrl) {
+    findBlogUrl(doc, originalUrl) {
         const blogLinks = doc.querySelectorAll('a[href*="blog"], a[href*="noticias"], a[href*="news"]');
         if (blogLinks.length > 0) {
             return blogLinks[0].href;
