@@ -537,18 +537,24 @@ Especialista em Tráfego & SEO para Moda`;
     }
 
     updateProgress(current, total) {
-        const progressFill = document.querySelector('.progress-fill');
-        const statusText = document.querySelector('.status-text');
-        
-        if (progressFill) {
-            const percentage = (current / total) * 100;
-            progressFill.style.width = `${percentage}%`;
-        }
-        
-        if (statusText) {
-            statusText.textContent = `Processando... ${current}/${total} URLs`;
-        }
+    const progressFill = document.querySelector('.progress-fill');
+    const statusText = document.querySelector('.status-text');
+    
+    if (progressFill) {
+        const percentage = (current / total) * 100;
+        progressFill.style.width = `${percentage}%`;
     }
+    
+    if (statusText) {
+        // Calcular tempo estimado restante
+        const elapsed = Date.now() - this.startTime;
+        const estimatedTotal = total * this.estimatedTimePerUrl;
+        const remaining = Math.max(0, estimatedTotal - elapsed);
+        const secondsLeft = Math.ceil(remaining / 1000);
+        
+        statusText.textContent = `Processando... ${current}/${total} URLs | Tempo estimado: ${secondsLeft}s`;
+    }
+}
 
     generateCSV(data) {
         // Adicionando colunas WhatsApp e Blog URL
