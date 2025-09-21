@@ -13,8 +13,27 @@ class ColdOutreachGenerator {
         this.maxUrlsPerRequest = 10;
         this.requestTimeout = 5000; // 5 segundos entre execuções
         this.uniqueUrls = new Set(); // Remove urls duplicadas   
-
+        // Adicione esta linha para armazenar as URLs duplicadas
+        this.duplicateUrls = [];
     }
+
+     // 🔽 ADICIONE A FUNÇÃO normalizeUrl AQUI 🔽
+    normalizeUrl(url) {
+        try {
+            let normalizedUrl = url.trim().toLowerCase();
+            
+            // Remove protocolo e www
+            normalizedUrl = normalizedUrl.replace(/^(https?:\/\/)?(www\.)?/, '');
+            
+            // Remove barras finais
+            normalizedUrl = normalizedUrl.replace(/\/+$/, '');
+            
+            return normalizedUrl;
+        } catch (error) {
+            return url.trim().toLowerCase();
+        }
+    }
+    // 🔼 FIM DA FUNÇÃO normalizeUrl 🔼
 
     // Sanitiza entradas para prevenir XSS
     sanitizeInput(input) {
@@ -238,39 +257,51 @@ Especialista em Tráfego & SEO para Moda`;
     }
 
     async processUrls(urlList, userName) {
-
-        // Reset do conjunto de URLs únicas a cada nova execução
-    this.uniqueUrls.clear();
-    
-        // Resto do código permanece igual
         // Verifica rate limiting antes de processar
-    this.checkRateLimit();
-    
-    // Sanitiza o nome do usuário
-    this.userName = this.sanitizeInput(userName);
-    
-    // Divide e filtra as URLs
-    const rawUrls = urlList.split('\n').filter(url => url.trim());
-    
-    // Aplica limite de URLs por requisição
-    if (rawUrls.length > this.maxUrlsPerRequest) {
-        throw new Error(`Número máximo de URLs excedido. Máximo permitido: ${this.maxUrlsPerRequest}`);
-    }
-    
-    // Filtra URLs válidas
-    this.allUrls = rawUrls.filter(url => this.isValidUrl(url));
-    this.ignoredUrls = rawUrls.filter(url => !this.isValidUrl(url));
-    
-    this.processedUrls = [];
-    this.currentIndex = 0;
-    this.isProcessing = true;
-    this.isPaused = false;
+        this.checkRateLimit();
+        
+        // Sanitiza o nome do usuário
+        this.userName = this.sanitizeInput(userName);
+        
+        // Divide e filtra as URLs
+        const rawUrls = urlList.split('\n').filter(url => url.trim());
+        
+        // Aplica limite de URLs por requisição
+        if (rawUrls.length > this.maxUrlsPerRequest) {
+            throw new Error(`Número máximo de URLs excedido. Máximo permitido: ${this.maxUrlsPerRequest}`);
+        }
+        
+        // Remove URLs duplicadas
+        const seenUrls = new Map();
+        const duplicateUrls = [];
+        
+        rawUrls.forEach(url => {
+            const normalized = this.normalizeUrl(url);
+            if (seenUrls.has(normalized)) {
+                duplicateUrls.push(url);
+            } else {
+                seenUrls.set(normalized, url.trim());
+            }
+        });
+        
+        // As URLs únicas (não duplicadas) são os valores do Map
+        const uniqueUrls = Array.from(seenUrls.values());
+        
+        // Filtra URLs válidas
+        this.allUrls = uniqueUrls.filter(url => this.isValidUrl(url));
+        this.ignoredUrls = uniqueUrls.filter(url => !this.isValidUrl(url));
+        this.duplicateUrls = duplicateUrls; // Armazena as duplicatas para relatório
+        
+        this.processedUrls = [];
+        this.currentIndex = 0;
+        this.isProcessing = true;
+        this.isPaused = false;
 
-    await this._processUrlsInternal();
+        await this._processUrlsInternal();
 
-    this.isProcessing = false;
-    return this.processedUrls;
-    }
+        this.isProcessing = false;
+        return this.processedUrls;
+}
 
     async _processUrlsInternal() {
         while (this.currentIndex < this.allUrls.length && this.isProcessing && !this.isPaused) {
@@ -349,17 +380,18 @@ Especialista em Tráfego & SEO para Moda`;
         }
     }
 
-        getStats() {
-            const totalUrls = this.allUrls.length + this.ignoredUrls.length;
-            const duplicates = totalUrls - this.uniqueUrls.size;
-    
-                return {
+    getStats() {
+        const totalUrls = this.allUrls.length + this.ignoredUrls.length + this.duplicateUrls.length;
+            
+        return {
             processed: this.processedUrls.length,
             ignored: this.ignoredUrls.length,
-            duplicates: duplicates > 0 ? duplicates : 0,
+            duplicates: this.duplicateUrls.length,
             total: totalUrls
         };
     }
+
+    
 }
 
 // Inicialização da aplicação
@@ -420,6 +452,10 @@ function showResults(results, stats) {
                     <div class="stat-number">${stats.ignored}</div>
                     <div class="stat-label">Ignoradas</div>
                 </div>
+                <div class="stat-card ${stats.duplicates > 0 ? 'duplicate' : ''}">
+                    <div class="stat-number">${stats.duplicates}</div>
+                    <div class="stat-label">Duplicadas</div>
+                </div>
                 <div class="stat-card">
                     <div class="stat-number">${stats.total}</div>
                     <div class="stat-label">Total</div>
@@ -431,8 +467,17 @@ function showResults(results, stats) {
             <h4>✅ Processamento concluído</h4>
             <p>O arquivo CSV com todas as mensagens foi baixado automaticamente.</p>
             <p>Foram processadas ${stats.processed} URLs únicas.</p>
+        ${stats.ignored > 0 ? 
+            `<p>${stats.ignored} URLs inválidas foram ignoradas.</p>` : 
+            ''}
         ${stats.duplicates > 0 ? 
-            `<p>${stats.duplicates} URLs duplicadas foram identificadas e ignoradas.</p>` : 
+            `<p>${stats.duplicates} URLs duplicadas foram identificadas e removidas.</p>
+             <details>
+                 <summary>Ver URLs duplicadas</summary>
+                 <ul class="duplicate-list">
+                     ${generator.duplicateUrls.map(url => `<li>${generator.sanitizeInput(url)}</li>`).join('')}
+                 </ul>
+             </details>` : 
             ''}
         </div>
     `;

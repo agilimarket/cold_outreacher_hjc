@@ -318,3 +318,39 @@ footer {
 .stat-card.duplicate .stat-label {
     color: white;
 }
+
+.duplicate-list {
+    margin-top: 10px;
+    padding-left: 20px;
+    font-size: 0.9rem;
+    max-height: 150px;
+    overflow-y: auto;
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.duplicate-list li {
+    margin-bottom: 5px;
+    word-break: break-all;
+}
+
+details {
+    margin-top: 10px;
+}
+
+summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.stat-card.duplicate {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    color: white;
+}
+
+.stat-card.duplicate .stat-number,
+.stat-card.duplicate .stat-label {
+    color: white;
+}
