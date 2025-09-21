@@ -354,3 +354,30 @@ summary {
 .stat-card.duplicate .stat-label {
     color: white;
 }
+
+.mode-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    margin: 10px 0;
+}
+
+.mode-dot {
+    width: 10px;
+    height: 10px;
+    background-color: #4caf50;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
