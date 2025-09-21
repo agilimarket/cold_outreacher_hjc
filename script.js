@@ -16,7 +16,7 @@ class ColdOutreachGenerator {
         // Adicione esta linha para armazenar as URLs duplicadas
         this.duplicateUrls = [];
         // Novas constantes para análise real
-        this.corsProxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        this.corsProxyUrl = 'https://cors-anywhere.com/';
         this.requestTimeout = 10000; // 10 segundos para timeout
         this.estimatedTimePerUrl = 2000; // 2 segundos por URL (para estimativa)
         this.requestCache = new Map();
