@@ -10,7 +10,7 @@ class ColdOutreachGenerator {
         this.userName = '';
         this.lastExecution = 0;
         this.executionCount = 0;
-        this.maxUrlsPerRequest = 10;
+        this.maxUrlsPerRequest = 25;
         this.requestTimeout = 5000; // 5 segundos entre execuções
         this.uniqueUrls = new Set(); // Remove urls duplicadas   
         // Adicione esta linha para armazenar as URLs duplicadas
@@ -122,64 +122,38 @@ class ColdOutreachGenerator {
 }
 
     async fetchWebsiteData(url) {
-
-            // Verificar se já temos essa URL em cache
-        const cached = this.requestCache.get(url);
-        if (cached) {
-            console.log(`Usando dados em cache para: ${url}`);
-            return cached;
-        }
-
-        try {
-            console.log(`Iniciando análise de: ${url}`);
-            
-            // Tentar fazer requisição real primeiro
-            const response = await this.makeRealRequest(url);
-            
-            if (response && response.ok) {
-                const html = await response.text();
-                const realData = this.analyzeRealWebsite(html, url);
-                console.log(`Análise real bem-sucedida para: ${url}`);
-                return realData;
-
-                 // Armazenar no cache
-            if (result) {
-                this.requestCache.set(url, result);
-        }
-
-            } else {
-                // Fallback para dados realistas
-                console.log(`Usando dados realistas para: ${url}`);
-                return this.generateRealisticData(url);
-            }
-        } catch (error) {
-            console.error(`Erro ao buscar dados para ${url}:`, error);
-            return this.generateRealisticData(url);
+    // Verificar se já temos essa URL em cache
+    const cached = this.requestCache.get(url);
+    if (cached) {
+        console.log(`Usando dados em cache para: ${url}`);
+        return cached;
     }
-}
 
-    async makeRealRequest(url) {
-        const targetUrl = url.startsWith('http') ? url : `https://${url}`;
+    try {
+        console.log(`Iniciando análise de: ${url}`);
         
-        try {
-            // Usar proxy CORS para evitar bloqueios
-            const proxyUrl = `${this.corsProxyUrl}${targetUrl}`;
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout);
-            
-            const response = await fetch(proxyUrl, {
-                signal: controller.signal,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                }
-            });
-            
-            clearTimeout(timeoutId);
-            return response;
-        } catch (error) {
-            console.warn(`Não foi possível acessar ${url}:`, error.message);
-            return null;
+        // Tentar fazer requisição real primeiro
+        const response = await this.makeRealRequest(url);
+        
+        let resultData;
+        if (response && response.ok) {
+            const html = await response.text();
+            resultData = this.analyzeRealWebsite(html, url);
+            console.log(`Análise real bem-sucedida para: ${url}`);
+        } else {
+            // Fallback para dados realistas
+            console.log(`Usando dados realistas para: ${url}`);
+            resultData = this.generateRealisticData(url);
+        }
+
+        // Armazenar no cache
+        this.requestCache.set(url, resultData);
+        return resultData;
+    } catch (error) {
+        console.error(`Erro ao buscar dados para ${url}:`, error);
+        const resultData = this.generateRealisticData(url);
+        this.requestCache.set(url, resultData);
+        return resultData;
     }
 }
 
@@ -239,10 +213,10 @@ class ColdOutreachGenerator {
 
 // Adicione as outras funções auxiliares aqui...
 
-generateRealisticData(url) {
-    const domain = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
-    
-    return {
+    generateRealisticData(url) {
+        const domain = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
+        
+        return {
         title: `Página de ${domain}`,
         description: '',
         hasInstagram: Math.random() > 0.4,
@@ -257,6 +231,31 @@ generateRealisticData(url) {
         blogUrl: this.generateBlogUrl(url)
     };
 }
+
+    generateRecentDate() {
+        const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+        const currentDate = new Date();
+        const randomMonth = months[Math.floor(Math.random() * 12)];
+        const randomYear = currentDate.getFullYear() - Math.floor(Math.random() * 2);
+        return `${randomMonth}/${randomYear}`;
+    }
+
+    generateWhatsApp(domain) {
+        // Gerar número de WhatsApp brasileiro válido (11 dígitos)
+        const ddd = Math.floor(10 + Math.random() * 90); // DDD entre 10 e 99
+        const number = Math.floor(100000000 + Math.random() * 900000000); // 9 dígitos
+        return `55${ddd}${number}`;
+    }
+
+    generateBlogUrl(url) {
+        try {
+            const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+            return `${urlObj.origin}/blog`;
+        } catch (error) {
+            return 'Não encontrado';
+        }
+}
+
 
     findLastBlogPost(doc) {
         // Implementação simplificada - procurar por datas recentes
@@ -329,29 +328,44 @@ generateRealisticData(url) {
 
     // fim das funções auxiliares
 
-    async makeRealRequest(url) {
+async makeRealRequest(url, retries = 2) {
     const targetUrl = url.startsWith('http') ? url : `https://${url}`;
     
-    try {
-        // Usar proxy CORS para evitar bloqueios
-        const proxyUrl = `${this.corsProxyUrl}${targetUrl}`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout);
-        
-        const response = await fetch(proxyUrl, {
-            signal: controller.signal,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            // Usar proxy CORS para evitar bloqueios
+            const proxyUrl = `${this.corsProxyUrl}${targetUrl}`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout);
+            
+            const response = await fetch(proxyUrl, {
+                signal: controller.signal,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (response.ok) {
+                return response;
             }
-        });
-        
-        clearTimeout(timeoutId);
-        return response;
-    } catch (error) {
-        console.warn(`Não foi possível acessar ${url}:`, error.message);
-        return null;
+            
+            console.warn(`Tentativa ${attempt} falhou para ${url} com status: ${response.status}`);
+        } catch (error) {
+            console.warn(`Tentativa ${attempt} falhou para ${url}:`, error.message);
+            
+            if (attempt === retries) {
+                return null;
+            }
+            
+            // Esperar antes da próxima tentativa
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
     }
+    
+    return null;
 }
 
     analyzeStore(storeName, websiteData) {
